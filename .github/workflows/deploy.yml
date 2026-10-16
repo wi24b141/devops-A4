@@ -45,7 +45,7 @@ jobs:
           path: build.zip
           retention-days: 5
 
-    generate-release-notes:
+  generate-release-notes:
     needs: build
     runs-on: ubuntu-latest
     permissions:
