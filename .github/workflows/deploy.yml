@@ -50,7 +50,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # copilot-requests: write   # uncomment if your account/org allows it
     steps:
       - name: Checkout
         uses: actions/checkout@v4
