@@ -1,7 +1,7 @@
 name: CI/CD Deployment Pipeline
 
 on:
-  workflow_dispatch:   # manual trigger so you control when it runs
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -9,9 +9,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Generate dynamic version
+        id: version
+        run: |
+          VERSION="$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Generated version: $VERSION"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -45,16 +54,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ vars.BUILD_TAG }}
+          BASE_TAG: ${{ vars.BUILD_TAG }}
+          VERSION: ${{ needs.build.outputs.version }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
+          TAG="${BASE_TAG}-${VERSION}"
+          echo "Creating release with tag: $TAG"
           gh release create "$TAG" build.zip \
             --notes "$NOTE" \
             --title "Staging Release $TAG" \
             --repo "$GH_REPO"
 
   deploy-production:
-    needs: deploy-staging
+    needs: [build, deploy-staging]
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -69,9 +81,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ vars.BUILD_TAG }}
+          BASE_TAG: ${{ vars.BUILD_TAG }}
+          VERSION: ${{ needs.build.outputs.version }}
           NOTE: ${{ vars.RELEASE_NOTE }}
         run: |
+          TAG="${BASE_TAG}-${VERSION}"
+          echo "Creating release with tag: $TAG"
           gh release create "$TAG" build.zip \
             --notes "$NOTE" \
             --title "Production Release $TAG" \
