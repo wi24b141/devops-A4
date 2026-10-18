@@ -45,6 +45,25 @@ jobs:
           path: build.zip
           retention-days: 5
 
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests
+        run: bun run test:unit
+
+      - name: Run integration tests
+        run: bun run test:integration
+
   generate-release-notes:
     needs: build
     runs-on: ubuntu-latest
@@ -80,7 +99,7 @@ jobs:
           if-no-files-found: warn          
 
   deploy-staging:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     environment: staging
     permissions:
@@ -107,7 +126,7 @@ jobs:
             --repo "$GH_REPO"
 
   deploy-production:
-    needs: [build, deploy-staging, generate-release-notes]
+    needs: [test, deploy-staging, generate-release-notes]
     runs-on: ubuntu-latest
     environment: production
     permissions:
