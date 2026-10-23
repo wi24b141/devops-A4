@@ -1,4 +1,4 @@
-<h1 align="center" id="title">Activity Log</h1>
+<h1 align="center" id="title">Activity Log </h1>
 
 ![CI/CD Pipeline](https://github.com/wi24b141/devops-A4/actions/workflows/deploy.yml/badge.svg?event=workflow_dispatch)
 
